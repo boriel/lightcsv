@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "simplecsv"
+version = "0.1.0"
+description = "Simple pure Python CSV parser"
+authors = ["Jose Rodriguez <boriel@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+
+[tool.poetry.dev-dependencies]
+black = "^21.9b0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 120
+target-version = ['py38']
