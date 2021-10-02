@@ -1,0 +1,144 @@
+name: prod aws deployment
+
+on:
+  push:
+    branches:
+      - test
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: [3.8]
+
+    defaults:
+      run:
+        working-directory: .
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Cache virtualenv
+        uses: actions/cache@v2
+        with:
+          path: ./${{ env.VIRTUALENV }}
+          key: venv-main-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            venv-main-
+
+      - name: Install Python Dependencies in a virtualenv
+        run: |
+          pip install poetry
+
+      - name: Run Lint
+        run: |
+          source ${{ env.VIRTUALENV }}/bin/activate
+          make lint
+
+      - name: Run Tests and get Coverage Report
+        run: |
+          source ${{ env.VIRTUALENV }}/bin/activate
+          make coverage-report
+
+      - name: Python Semantic Release
+        uses: relekang/python-semantic-release@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+  build_push_image:
+    runs-on: self-hosted
+    needs: test
+
+    defaults:
+      run:
+        working-directory: .
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Set outputs
+        id: vars
+        run: |
+          echo "SHA_SHORT=${{ github.sha }}" >> $GITHUB_ENV
+          echo "IMAGE=${{ env.ECR_REGISTRY }}/${{ env.PROJECT }}-${{ env.SERVICE }}" >> $GITHUB_ENV
+          echo "IMAGE_TAG=${{ github.sha }}-${{ env.ENVIRONMENT }}" >> $GITHUB_ENV
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build and Push Image
+        run: |
+          docker build -t ${{ env.IMAGE }}:${{ env.IMAGE_TAG }} .
+          docker push ${{ env.IMAGE }}:${{ env.IMAGE_TAG }}
+
+  deploy:
+    runs-on: self-hosted
+    needs: build_push_image
+    name: Deploy image
+    steps:
+      - name: Set outputs
+        id: vars
+        run: |
+          echo "SHA_SHORT=${{ github.sha }}" >> $GITHUB_ENV
+          echo "IMAGE=${{ env.ECR_REGISTRY }}/${{ env.PROJECT }}-${{ env.SERVICE }}" >> $GITHUB_ENV
+          echo "IMAGE_TAG=${{ github.sha }}-${{ env.ENVIRONMENT }}" >> $GITHUB_ENV
+
+      - name: Assume Role
+        uses: youyo/awscredswrap@master
+        with:
+          role_arn: arn:aws:iam::${{ env.ENV_ACCOUNT_ID }}:role/SDC-Cdscinbound
+          duration_seconds: 3600
+          role_session_name: ${{ env.ENVIRONMENT }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ env.AWS_DEFAULT_REGION }}
+
+      # Pro Deployment
+      - name: Set eks cluster
+        run: aws eks update-kubeconfig --name ${{ env.ENVIRONMENT }}-cluster --region ${{ env.AWS_DEFAULT_REGION }}
+        env:
+          ENVIRONMENT: ${{ env.ENVIRONMENT }}
+
+      - name: Deploy new image
+        run: |
+          kubectl set image deployment/${{ env.SERVICE }}-deploy ${{ env.SERVICE }}=${{ env.IMAGE }}:${{ env.IMAGE_TAG }} -n ${{ env.PROJECT }}
+          kubectl rollout status deployment/${{ env.SERVICE }}-deploy -n ${{ env.PROJECT }}
+
+      - name: Deploy slack notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_ICON: https://raw.githubusercontent.com/quintessence/slack-icons/master/images/github-logo-slack-icon.png
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_USERNAME: deploy-bot
+          SLACK_TITLE: ${{ github.repository }}
+          SLACK_MESSAGE: "Deployed branch `main` to `${{env.ENVIRONMENT}}` successfully"
+          MSG_MINIMAL: true
+
+      - name: Deploy failure slack notification
+        if: ${{ failure() }}
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_ICON: https://raw.githubusercontent.com/quintessence/slack-icons/master/images/github-logo-slack-icon.png
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_USERNAME: deploy-bot
+          SLACK_TITLE: ${{ github.repository }}
+          SLACK_MESSAGE: "Failed to deploy branch `main` to `${{env.ENVIRONMENT}}`"
+          MSG_MINIMAL: true
