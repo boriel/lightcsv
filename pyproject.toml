@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "lightcsv"
-version = "0.1.0"
+version = "0.2.0"
 description = "Simple pure Python CSV parser"
 authors = ["Jose Rodriguez <boriel@gmail.com>"]
 license = "MIT"
