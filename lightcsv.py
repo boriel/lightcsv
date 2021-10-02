@@ -125,7 +125,7 @@ class LightCSV:
 
     def parse_obj(self, lineno: int, chunk: str) -> CellType:
         """If you want to add more types to the parser (i.e. to deserialize your own
-        object from a string), subclass LightCSV and overload this method. Then, either
+        object from a string), subclass LightCSV and override this method. Then, either
         return your object or, if you can't deserialize it, return super().parse_obj(lineno, chunk).
         """
         chunk = chunk.strip()
