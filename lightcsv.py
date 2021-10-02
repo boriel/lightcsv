@@ -14,7 +14,7 @@ CellType = Union[None, int, float, str, datetime.datetime, datetime.date, dateti
 RE_INT = re.compile(r'[-+]?\d+')
 
 
-class SimpleCSV:
+class LightCSV:
     def __init__(
         self, separator=",", quote_char='"', field_names: Iterable[str] = None, strict=True, has_headers=False
     ):
@@ -125,7 +125,7 @@ class SimpleCSV:
 
     def parse_obj(self, lineno: int, chunk: str) -> CellType:
         """If you want to add more types to the parser (i.e. to deserialize your own
-        object from a string), subclass SimpleCSV and overload this method. Then, either
+        object from a string), subclass LightCSV and overload this method. Then, either
         return your object or, if you can't deserialize it, return super().parse_obj(lineno, chunk).
         """
         chunk = chunk.strip()
