@@ -4,6 +4,10 @@ version = "0.2.0"
 description = "Simple pure Python CSV parser"
 authors = ["Jose Rodriguez <boriel@gmail.com>"]
 license = "MIT"
+homepage = "https://github.com/boriel/lightcsv"
+repository = "https://github.com/boriel/lightcsv"
+keywords = ["csv", "CSV"]
+
 
 [tool.poetry.dependencies]
 python = "^3.8"
