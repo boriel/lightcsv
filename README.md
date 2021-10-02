@@ -1,6 +1,6 @@
-# SimpleCSV
+# LightCSV
 
-Simple CSV reader
+Simple light CSV reader
 
 This CSV reader is implemented in just pure Python. It allows to specify a separator, a quote char and
 column titles (or get the first row as titles). Nothing more, nothing else.
@@ -10,9 +10,9 @@ column titles (or get the first row as titles). Nothing more, nothing else.
 Usage is pretty straightforward:
 
 ```python
-from simplecsv import SimpleCSV
+from lightcsv import LightCSV
 
-for row in SimpleCSV().read_file("myfile.csv"):
+for row in LightCSV().read_file("myfile.csv"):
     print(row)
 ```
 
@@ -20,11 +20,12 @@ This will open a file named `myfile.csv` and iterate over the CSV file returning
 row as a key-value dictionary.
 
 You can supply your own stream (i.e. an open file instead of a filename):
+
 ```python
-from simplecsv import SimpleCSV
+from lightcsv import LightCSV
 
 with open("myfile.csv") as f:
-    for row in SimpleCSV().read(f):
+    for row in LightCSV().read(f):
         print(row)
 ```
 
