@@ -11,7 +11,7 @@ class SimpleCSVInvalidOptionError(Exception):
 
 
 CellType = Union[None, int, float, str, datetime.datetime, datetime.date, datetime.time]
-RE_INT = re.compile(r"[-+]?\d+")
+RE_INT = re.compile(r"[-+]?[0-9]+$")
 
 
 class LightCSV:
@@ -87,7 +87,7 @@ class LightCSV:
     def _is_int(self, s: str) -> bool:
         global RE_INT
 
-        return RE_INT.match(rf"{s}$") is not None
+        return RE_INT.match(s) is not None
 
     def _is_float(self, s: str) -> bool:
         try:
@@ -139,13 +139,13 @@ class LightCSV:
             return float(chunk)
 
         if self._is_string(chunk):
-            return chunk[1:-1]
-
-        if self._is_datetime(chunk):
-            return datetime.datetime.fromisoformat(chunk)
+            return chunk[1:-1].replace('""', '"')
 
         if self._is_date(chunk):
             return datetime.date.fromisoformat(chunk)
+
+        if self._is_datetime(chunk):
+            return datetime.datetime.fromisoformat(chunk)
 
         if self._is_time(chunk):
             return datetime.time.fromisoformat(chunk)
