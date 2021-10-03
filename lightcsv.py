@@ -30,7 +30,7 @@ class LightCSV:
         self.first_line = True
 
         if self.field_names and has_headers:
-            raise SimpleCSVInvalidOptionError("Cannot se field_names if has_headers is True")
+            raise SimpleCSVInvalidOptionError("Cannot use field_names if has_headers is True")
 
     def read(self, stream: TextIO) -> Iterable[Dict[Union[str, int], CellType]]:
         self.first_line = True
