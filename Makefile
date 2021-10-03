@@ -7,3 +7,7 @@ lint:
 .PHONY: format
 format:
 	black .
+
+.PHONY: test
+test:
+	python -m unittest -v
