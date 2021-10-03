@@ -1,7 +1,7 @@
 import datetime
 import re
 
-from typing import Dict, Iterable, TextIO, Union
+from typing import Dict, Iterable, List, TextIO, Union
 
 
 class SimpleCSVInvalidOptionError(Exception):
@@ -11,7 +11,7 @@ class SimpleCSVInvalidOptionError(Exception):
 
 
 CellType = Union[None, int, float, str, datetime.datetime, datetime.date, datetime.time]
-RE_INT = re.compile(r'[-+]?\d+')
+RE_INT = re.compile(r"[-+]?\d+")
 
 
 class LightCSV:
@@ -20,7 +20,7 @@ class LightCSV:
     ):
         self.separator = separator
         self.quote_char = quote_char
-        self.field_names = list(field_names or [])
+        self.field_names: List[Union[str, int]] = list(field_names or [])
         self.strict = strict
         self.has_headers = has_headers
 
@@ -45,7 +45,7 @@ class LightCSV:
                 self.first_line = False
 
                 if self.has_headers:
-                    self.field_names = parsed_line
+                    self.field_names = [str(x) for x in parsed_line]
                     continue
                 else:
                     self.field_names = list(range(len(parsed_line)))
@@ -59,8 +59,8 @@ class LightCSV:
         with open(filename, "rt", encoding="utf-8") as f:
             yield from self.read(f)
 
-    def _parse(self, lineno: int, line: str) -> list:
-        result = []
+    def _parse(self, lineno: int, line: str) -> List[CellType]:
+        result: List[CellType] = []
 
         while True:
             match = self.re.match(line)
