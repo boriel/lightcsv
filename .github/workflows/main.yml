@@ -28,6 +28,12 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Caches pip
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ hashFiles('pyproject.toml') }}-${{ hashFiles('poetry.lock') }}
+
       - name: Install Poetry
         run: pip install poetry
 
