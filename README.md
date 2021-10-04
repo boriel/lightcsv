@@ -113,8 +113,8 @@ class CSVHexRecognizer(LightCSV):
         return super().parse_obj(lineno, chunk)
 ```
 
-As you can see, you have to override `parse_obj()`. If your match fails, you have to invoke the `super()` and
-and return its result.
+As you can see, you have to override `parse_obj()`. If your match fails, you have to invoke `super()` (overridden) 
+`parse_obj()` method and return its result.
 
 
 ---
