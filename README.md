@@ -9,6 +9,14 @@ Simple light CSV reader
 This CSV reader is implemented in just pure Python. It allows to specify a separator, a quote char and
 column titles (or get the first row as titles). Nothing more, nothing else.
 
+## Installation
+
+Install it with:
+
+```shell
+pip install lightcsv
+```
+
 ## Usage
 
 Usage is pretty straightforward:
